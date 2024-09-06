@@ -36,3 +36,29 @@
     transform: rotate(360deg);
   }
 }
+
+.annotationLayer {
+  height: calc(var(--scale-factor) * 200px) !important;
+  display: none !important;
+}
+
+
+.react-pdf__Page__textContent {
+  width: 100% !important;
+  display: none !important;
+  padding: 25px !important;
+}
+
+.pdf-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+}
+
+.pdf-container canvas {
+  max-width: 100%;
+  height: auto;
+}
+
