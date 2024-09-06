@@ -11,17 +11,22 @@ import FileModal from '../modals/FileModal';
 import ConfirmationModal from '../modals/ConfirmationModal';
 import { debounce } from 'lodash';
 import toast from 'react-hot-toast';
+import { deleteProject, getProjects } from '../store/projectSlice';
+import { useAppDispatch, useAppSelector } from '../store';
 
 const Projects = () => {
-    const [projects, setProjects] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [showFileModal, setShowFileModal] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState(null);
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const { projectState, projectStatus } = useAppSelector((state) => ({
+        projectState: state.project.projects,
+        projectStatus: state.project.status,
+    }));
 
     // State for filters
     const [statusFilter, setStatusFilter] = useState('');
@@ -29,17 +34,9 @@ const Projects = () => {
     const [startDateFilter, setStartDateFilter] = useState('');
     const [endDateFilter, setEndDateFilter] = useState('');
 
-    const loadProjects = useCallback(async (filters = {}) => {
-        setLoading(true);
-        try {
-            const response = await apiClient().get('/projects', { params: filters });
-            setProjects(response.data);
-        } catch (error) {
-            console.error('Error fetching projects:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const loadProjects = useCallback((filters = {}) => {
+        dispatch(getProjects(filters));
+    }, [dispatch]);
 
     const debouncedLoadProjects = useCallback(
         debounce((filters) => loadProjects(filters), 300),
@@ -85,7 +82,7 @@ const Projects = () => {
         if (projectToDelete) {
             try {
                 await apiClient().delete(`/projects/${projectToDelete._id}`);
-                setProjects(projects.filter(p => p._id !== projectToDelete._id));
+                dispatch(deleteProject(projectToDelete._id));
                 setShowConfirmModal(false);
                 setProjectToDelete(null);
             } catch (error) {
@@ -176,16 +173,16 @@ const Projects = () => {
                     </Row>
                 </Form>
 
-                {loading && (
+                {projectStatus === "loading" && (
                     <div className="text-center my-4">
                         <Spinner animation="border" />
                     </div>
                 )}
-                {!loading && !projects.length ? (
+                {!projectState.length ? (
                     <Alert variant="info">No projects found.</Alert>
                 ) : (
                     <Row>
-                        {projects.map(project => (
+                        {projectState?.map(project => (
                             <Col key={project._id} md={4} className="mb-3">
                                 <Card>
                                     <Card.Body>
@@ -257,13 +254,11 @@ const Projects = () => {
                 show={showModal}
                 onHide={() => setShowModal(false)}
                 selectedProject={selectedProject}
-                setProjects={setProjects}
             />
             <NoteModal
                 show={showNoteModal}
                 onHide={() => setShowNoteModal(false)}
                 projectId={selectedProject?._id}
-                setProjects={setProjects}
             />
             <FileModal
                 show={showFileModal}

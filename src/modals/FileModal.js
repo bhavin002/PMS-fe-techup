@@ -4,10 +4,13 @@ import { FileEarmarkArrowUpFill } from 'react-bootstrap-icons';
 import { useDropzone } from 'react-dropzone';
 import apiClient from '../utils/axiosInstance';
 import toast from 'react-hot-toast';
+import { useAppDispatch } from '../store';
+import { addFilesToProject } from '../store/projectSlice';
 
-const FileModal = ({ show, onHide, projectId, onUploadSuccess }) => {
+const FileModal = ({ show, onHide, projectId }) => {
     const [files, setFiles] = useState([]);
     const [fileLoading, setFileLoading] = useState(false);
+    const dispatch = useAppDispatch();
 
     const handleUploadFiles = async () => {
         setFileLoading(true);
@@ -40,14 +43,12 @@ const FileModal = ({ show, onHide, projectId, onUploadSuccess }) => {
                 const s3_key = preSignedUrl.key;
                 return { file_name, file_extension, s3_key };
             });
-            await apiClient().post('/files/create', { files: fileDetails, projectId });
-
+            const responseData = await apiClient().post('/files/create', { files: fileDetails, projectId });
+            dispatch(addFilesToProject({ projectId, files: responseData.data.files }));
             onHide();
-            onUploadSuccess();
             toast.success('Files uploaded successfully');
         } catch (error) {
-            console.error('Error uploading files:', error);
-            toast.error('Error uploading files');
+            toast.error(error);
         } finally {
             setFiles([]);
             setFileLoading(false);

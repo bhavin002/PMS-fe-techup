@@ -1,12 +1,12 @@
-import React from 'react';
-import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
-import { PersonCircle } from 'react-bootstrap-icons';
-import { useNavigate } from 'react-router-dom';
+import { Navbar, Container, Nav, NavDropdown } from "react-bootstrap";
+import { PersonCircle } from "react-bootstrap-icons";
+import { useNavigate } from "react-router-dom";
 
-const Header = () => {
+const MyNavbar = () => {
   const navigate = useNavigate();
+
   return (
-    <Navbar bg="light" expand="lg">
+    <Navbar bg="light" expand="lg" collapseOnSelect>
       <Container>
         <Navbar.Brand style={{ cursor: "pointer", fontWeight: "900", fontSize: "28px" }} onClick={() => navigate("/projects")}>PMS</Navbar.Brand>
         <Nav className="ms-auto">
@@ -26,4 +26,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default MyNavbar;

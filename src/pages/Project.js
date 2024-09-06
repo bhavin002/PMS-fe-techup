@@ -11,10 +11,11 @@ import Loader from '../components/Loader';
 import PDFViewerModal from '../modals/PDFViewerModal';
 import toast from 'react-hot-toast';
 import FileModal from '../modals/FileModal';
+import { getProject, removeFileToProject, removeNoteFromProject } from '../store/projectSlice';
+import { useAppDispatch, useAppSelector } from '../store';
 
 
 const Project = () => {
-    const [project, setProject] = useState(null);
     const { projectId } = useParams();
     const [showNoteModal, setShowNoteModal] = useState(false);
     const [selectedNote, setSelectedNote] = useState(null);
@@ -25,19 +26,17 @@ const Project = () => {
     const [showPDFModal, setShowPDFModal] = useState(false);
     const [selectedFileURL, setSelectedFileURL] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const dispatch = useAppDispatch();
+    const { project, status } = useAppSelector((state) => ({
+        project: state.project.project,
+        status: state.project.status
+    }))
 
     useEffect(() => {
-        loadProject();
-    }, [projectId]);
-
-    const loadProject = async () => {
-        try {
-            const response = await apiClient().get(`/projects/${projectId}`);
-            setProject(response.data);
-        } catch (error) {
-            console.error('Error fetching project:', error);
+        if (projectId) {
+            dispatch(getProject(projectId));
         }
-    };
+    }, [dispatch, projectId]);
 
     const handleAddNote = () => {
         setSelectedNote(null);
@@ -61,15 +60,18 @@ const Project = () => {
 
     const confirmDeleteItem = async () => {
         try {
+            setIsLoading(true);
             if (deleteType === 'note') {
                 await apiClient().delete(`/notes/${itemToDelete._id}`);
+                dispatch(removeNoteFromProject({ projectId, noteId: itemToDelete._id }));
             } else if (deleteType === 'file') {
                 await apiClient().delete(`/files/${itemToDelete._id}`);
+                dispatch(removeFileToProject({ projectId, fileId: itemToDelete._id }));
             }
-            await loadProject();
         } catch (error) {
-            console.error(`Error deleting ${deleteType}:`, error);
+            toast.error(error);
         } finally {
+            setIsLoading(false);
             setShowConfirmModal(false);
             setItemToDelete(null);
             setDeleteType(null);
@@ -82,7 +84,6 @@ const Project = () => {
     };
 
     const handleFilePreview = async (file) => {
-        console.log('✌️file --->', file);
         const response = await apiClient().post(`/files/get-signed-url`, {
             key: file.s3_key
         });
@@ -119,19 +120,19 @@ const Project = () => {
     return (
         <>
             <Header />
-            {(project === null || isLoading) ? (
+            {(project === null || isLoading || status === "loading") ? (
                 <Loader />
             ) : (
                 <Container>
-                    <h1 className="my-3">{project.title}</h1>
+                    <h1 className="my-3">{project?.title}</h1>
                     <Card>
                         <Card.Body className="m-3">
                             <Card.Title className="fs-3">Description</Card.Title>
-                            <Card.Text className="fs-5">{project.description}</Card.Text>
+                            <Card.Text className="fs-5">{project?.description}</Card.Text>
                             <Card.Title className="fs-3">Details</Card.Title>
                             <Card.Text className="fs-5">
-                                The Project started on {format(new Date(project.start_date), 'd MMM yyyy')} and the deadline is on{' '}
-                                {format(new Date(project.end_date), 'd MMM yyyy')}. The project status is {project.status}.
+                                The Project started on {format(new Date(project?.start_date), 'd MMM yyyy')} and the deadline is on{' '}
+                                {format(new Date(project?.end_date), 'd MMM yyyy')}. The project status is {project?.status}.
                             </Card.Text>
                         </Card.Body>
                         <Card.Footer className="px-4 pb-4">
@@ -142,7 +143,7 @@ const Project = () => {
                                 </Button>
                             </div>
                             <ListGroup>
-                                {project.notes.map((note) => (
+                                {project?.notes.map((note) => (
                                     <ListGroup.Item
                                         key={note._id}
                                         className="d-flex justify-content-between align-items-center list-item"
@@ -167,7 +168,7 @@ const Project = () => {
                                 </Button>
                             </div>
                             <ListGroup>
-                                {project.files.map((file) => (
+                                {project?.files.map((file) => (
                                     <ListGroup.Item
                                         key={file._id}
                                         className="d-flex justify-content-between align-items-center list-item"
@@ -197,7 +198,6 @@ const Project = () => {
                 onHide={handleNoteModalClose}
                 projectId={projectId}
                 note={selectedNote}
-                setProjects={loadProject}
             />
             <ConfirmationModal
                 show={showConfirmModal}
@@ -210,7 +210,6 @@ const Project = () => {
                 show={showFileModal}
                 onHide={() => setShowFileModal(false)}
                 projectId={projectId}
-                onUploadSuccess={loadProject}
             />
             <PDFViewerModal
                 show={showPDFModal}

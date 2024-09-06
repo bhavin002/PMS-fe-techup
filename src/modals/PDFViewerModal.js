@@ -10,7 +10,12 @@ const PDFViewerModal = ({ documentURL, show, setShow }) => {
   const [pageNumber, setPageNumber] = useState(1);
   const [error, setError] = useState(null);
 
-  const handleClose = () => setShow(false);
+  const handleClose = () => {
+    setShow(false);
+    setNumPages(null);
+    setPageNumber(1);
+    setError(null);
+  };
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);

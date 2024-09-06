@@ -4,6 +4,9 @@ import { Formik, Field, Form as FormikForm, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { format } from 'date-fns';
 import apiClient from '../utils/axiosInstance';
+import { useAppDispatch } from '../store';
+import { addProject, updateProject } from '../store/projectSlice';
+import toast from 'react-hot-toast';
 
 const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
@@ -16,19 +19,20 @@ const validationSchema = Yup.object({
     status: Yup.string().oneOf(['Draft', 'Active', 'On-hold', 'Completed'], 'Invalid status').required('Status is required')
 });
 
-const ProjectModal = ({ show, onHide, selectedProject, setProjects }) => {
+const ProjectModal = ({ show, onHide, selectedProject }) => {
+    const dispatch = useAppDispatch();
     const handleSaveProject = async (values, { setSubmitting }) => {
         try {
             if (selectedProject) {
-                await apiClient().put(`/projects/${selectedProject._id}`, values);
+                const response = await apiClient().put(`/projects/${selectedProject._id}`, values);
+                dispatch(updateProject({ id: selectedProject._id, ...response.data }));
             } else {
-                await apiClient().post('/projects/create', values);
+                const response = await apiClient().post('/projects/create', values);
+                dispatch(addProject(response.data));
             }
-            const response = await apiClient().get('/projects');
-            setProjects(response.data);
             onHide();
         } catch (error) {
-            console.error('Error saving project:', error);
+            toast.error(error);
         } finally {
             setSubmitting(false);
         }

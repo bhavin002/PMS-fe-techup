@@ -1,0 +1,17 @@
+.custom-dropdown .dropdown-menu {
+    top: 100% !important;
+    /* Ensure it opens below the icon */
+    left: auto !important;
+    /* Override default positioning */
+    right: 0 !important;
+    /* Align to the right of the container */
+    transform: none !important;
+    /* Prevent any transform behavior */
+    margin-top: 0.5rem;
+    /* Adjust spacing between icon and dropdown */
+}
+
+.custom-dropdown .dropdown-toggle::after {
+    display: none;
+    /* Hide the default dropdown arrow */
+}

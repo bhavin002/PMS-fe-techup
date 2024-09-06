@@ -3,31 +3,31 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import { Formik, Field, Form as FormikForm, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import apiClient from '../utils/axiosInstance';
+import { useAppDispatch } from '../store';
+import { addNoteToProject, updateNoteInProject } from '../store/projectSlice';
 
 const validationSchema = Yup.object({
     content: Yup.string().required('Note content is required'),
 });
 
-const NoteModal = ({ show, onHide, projectId, note, setProjects }) => {
+const NoteModal = ({ show, onHide, projectId, note }) => {
+    const dispatch = useAppDispatch();
     const handleSaveNote = async (values, { setSubmitting }) => {
         try {
             if (note) {
                 // Edit existing note
-                await apiClient().put(`/notes/${note._id}`, values);
+                const response = await apiClient().put(`/notes/${note._id}`, values);
+                dispatch(updateNoteInProject({ projectId, note: response.data }));
             } else {
                 // Add new note
                 values.projectId = projectId;
-                await apiClient().post(`/notes/create`, values);
+                const response = await apiClient().post(`/notes/create`, values);
+                dispatch(addNoteToProject({ projectId, note: response.data }));
             }
-
-            // Fetch updated projects
-            const response = await apiClient().get('/projects');
-            setProjects(response.data);
-
-            onHide();
         } catch (error) {
             console.error('Error saving note:', error);
         } finally {
+            onHide();
             setSubmitting(false);
         }
     };

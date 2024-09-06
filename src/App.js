@@ -26,6 +26,7 @@ function App() {
         <Route element={<PrivateRouteWrapper />}>
           <Route path="/projects" element={<Projects />} />
           <Route path='/project/:projectId' element={<Project />} />
+          <Route path="*" element={<h1>Not Found</h1>} />
         </Route>
       </Routes>
       <Toaster
